@@ -12,3 +12,4 @@ bob_sessions/*
 .DS_Store
 .venv/
 venv/
+.submission-notes/

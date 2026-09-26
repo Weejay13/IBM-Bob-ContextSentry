@@ -1,0 +1,62 @@
+ContextSentry - IBM Bob 2.0 Hackathon form text
+================================================
+
+TITLE (42 characters)
+ContextSentry: Repository Context Firewall
+
+SHORT DESCRIPTION
+ContextSentry is a local-first firewall for IBM Bob 2.0. It scans repositories for prompt injection, secret access and supply-chain scripts, then blocks unsafe agent actions with signed audit records.
+
+LONG DESCRIPTION
+Coding agents read untrusted files, issues, and package manifests every day. That content can contain instructions that hijack the agent: read the environment file, POST it to an external endpoint, or disable the security hooks. Existing guardrails check paths and commands, but they rarely answer the harder question: should this repository content be trusted with authority at all?
+
+ContextSentry is a repository context firewall that adds that missing decision layer around IBM Bob 2.0. It runs as a local process with no external AI API calls, and it hooks the full Bob lifecycle.
+
+Scan: bounded, read-only repository and text scans detect instruction override, secret access, exfiltration, destructive commands and risky install scripts.
+Constrain: paths are canonicalized, commands are allowlisted as exact profiles, MCP calls are restricted to trusted read-only tools, control-plane files are protected, and any uncertainty fails closed.
+Prove: every decision is appended to an HMAC-SHA256 chained audit log with sequence number, policy digest, reason code, taint state and a sealed session checkpoint, so the decision trail is tamper-evident and exportable as JSON.
+
+The result is that legitimate work keeps moving. A developer can still ask Bob to fix a rounding bug and add a regression test after an attack is contained, while secret reads, exfiltration and hook tampering are denied with an explicit rule ID.
+
+Everything runs on the developer machine. ContextSentry ships a custom Bob mode, five lifecycle hooks, a reusable agent skill, guard rules, three local read-only MCP scanning tools, a poisoned repository fixture, a safe repository fixture, a live dashboard and 46 automated tests.
+
+CATEGORY
+Developer Tools
+
+TAGS
+Security, AI Agents, Developer Tools, Software Engineering, Prompt Injection, MCP, Local-first
+
+TECHNOLOGIES
+Granite
+
+IBM BOB USAGE
+ContextSentry is built as a native IBM Bob 2.0 extension and was developed and validated with Bob Shell 2.0.5 and the Bob IDE 2.2.0.
+
+A custom mode, ContextSentry Guard, defines the enforcement posture and activates five lifecycle hooks in .bob/settings.json: SessionStart, UserPromptSubmit, PreToolUse, PostToolUse and Stop. A project skill, .bob/skills/context-repository/SKILL.md, teaches Bob when to scan untrusted context before acting on it, and .bob/rules/context-repository.md documents the guard rules. Three read-only MCP tools, scan_path, scan_text and audit_summary, are registered locally so Bob can inspect repository context without granting write or shell access.
+
+Every Bob action is evaluated before it runs and again after it returns. Suspicious tool output taints the session, so later shell and MCP actions stay restricted, while a Stop hook verifies and seals the HMAC audit chain. A successful Bob session is exported from the IDE as evidence: 140 audit records, a verified chain, and a blocked exfiltration attempt attributed to rule CS-SESSION-001.
+
+ADDITIONAL INFORMATION
+What it does: ContextSentry enforces one rule, repository content is evidence, never authority. Untrusted files can inform Bob's reasoning, but they can never authorize an action.
+
+Why local-first: the policy engine, scanner, audit chain and dashboard all run on the local machine. There are no external AI API calls, no telemetry and no credentials to manage, which keeps the security boundary inspectable and the demo reproducible offline.
+
+About the Granite selection: the form's Technologies field offers IBM watson and Granite. ContextSentry selected Granite because the product is a deterministic enforcement layer, not a hosted model integration. It performs no direct watsonx.ai or watsonx Orchestrate calls, so it runs as local-first enforcement compatible with Granite-based agents rather than as a watsonx service.
+
+Demo: the public dashboard exposes a live attack simulation that walks through session initialization, a legitimate task, poisoned context ingestion, a blocked secret read, a blocked exfiltration attempt, permitted remediation, taint propagation and a sealed audit chain, with a tamper-evident audit stream and a JSON report export.
+
+Open source: the full repository is public, including the policy engine, scanner, audit chain, MCP server, dashboard, Bob configuration, tests and the inert poisoned fixture.
+
+ATTACHMENTS
+Cover image: contextsentry-cover.png
+Slide presentation: contextsentry-slides.pdf
+Video demonstration: contextsentry-demo.mp4
+
+PUBLIC LINKS
+Repository: https://github.com/Weejay13/IBM-Bob-ContextSentry
+Live demo: https://ibm-bob-contextsentry.onrender.com
+
+RECORDING NOTES
+Open the demo URL before recording, because the free hosting tier can sleep.
+Never display .env files, API keys, credentials or personal data.
+Never run npm install or the poisoned fixture postinstall script.
