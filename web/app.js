@@ -5,6 +5,7 @@ const elements = {
   systemStatus: document.querySelector("#system-status"),
   runDemo: document.querySelector("#run-demo"),
   resetDemo: document.querySelector("#reset-demo"),
+  simulationPanel: document.querySelector("#simulation"),
   demoStatus: document.querySelector("#demo-status"),
   demoSession: document.querySelector("#demo-session"),
   demoStepCount: document.querySelector("#demo-step-count"),
@@ -70,7 +71,8 @@ function statusLabel(status) {
   const labels = {
     idle: "Ready for simulation",
     running: "Enforcement trace in progress",
-    complete: "Attack contained and audit sealed"
+    complete: "Attack contained and audit sealed",
+    error: "Simulation halted"
   };
   return labels[status] || "Ready for simulation";
 }
@@ -123,11 +125,19 @@ function renderState(state) {
   elements.chainStatus.classList.toggle("invalid", !valid && Boolean(audit.records));
   elements.chainStatus.innerHTML = `<span></span> ${valid && audit.records ? "Chain verified" : !valid && audit.records ? "Chain invalid" : "Chain pending"}`;
 
-  const running = demo.status === "running";
+  const status = demo.status || "idle";
+  const running = status === "running";
+  const failed = status === "error";
   elements.runDemo.disabled = running;
-  elements.resetDemo.disabled = running;
-  elements.runDemo.querySelector("span").textContent = running ? "Simulation running" : demo.status === "complete" ? "Run simulation again" : "Run live attack simulation";
-  elements.demoStatus.textContent = statusLabel(demo.status);
+  elements.resetDemo.disabled = false;
+  elements.runDemo.querySelector("span").textContent = running
+    ? "Simulation running"
+    : failed
+      ? "Retry simulation"
+      : status === "complete"
+        ? "Run simulation again"
+        : "Run live attack simulation";
+  elements.demoStatus.textContent = failed && demo.error ? `${statusLabel(status)} · ${demo.error}` : statusLabel(status);
   elements.demoSession.textContent = demo.session_id ? `Session ${demo.session_id}` : "No active demo session";
   elements.demoStepCount.textContent = `${demo.current_step || 0} / ${demo.total_steps || 8}`;
   elements.demoProgress.value = Number(demo.current_step || 0);
@@ -138,6 +148,17 @@ function renderState(state) {
 function renderDemo(demo) {
   const steps = Array.isArray(demo.steps) ? demo.steps : [];
   if (!steps.length) {
+    if (demo.status === "error") {
+      elements.demoTimeline.innerHTML = `
+        <li class="timeline-empty">
+          <div class="empty-shield">
+            <svg viewBox="0 0 32 38" aria-hidden="true"><path d="M16 1 29 6v10c0 9.7-5.2 16.7-13 21C8.2 32.7 3 25.7 3 16V6L16 1Z"></path><path d="M11 12l10 8M21 12l-10 8"></path></svg>
+          </div>
+          <strong>Trace halted at step ${escapeHtml(demo.failed_step || 1)} of ${escapeHtml(demo.total_steps || 8)}</strong>
+          <span>${escapeHtml(demo.error || "The enforcement engine returned an unexpected error.")}</span>
+        </li>`;
+      return;
+    }
     elements.demoTimeline.innerHTML = `
       <li class="timeline-empty">
         <div class="empty-shield">
@@ -248,6 +269,9 @@ async function runDemo() {
   try {
     const demo = await api("/api/demo", { method: "POST", body: "{}" });
     renderDemo(demo);
+    if (elements.simulationPanel && typeof elements.simulationPanel.scrollIntoView === "function") {
+      elements.simulationPanel.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
     showToast("Live enforcement simulation started");
     await refresh();
   } catch (error) {
