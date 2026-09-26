@@ -50,6 +50,47 @@ function safeClass(value) {
   return String(value ?? "unknown").toLowerCase().replace(/[^a-z-]/g, "");
 }
 
+function setText(element, value) {
+  const next = String(value ?? "");
+  if (element.textContent !== next) element.textContent = next;
+}
+
+function setHtml(element, html) {
+  if (element.innerHTML !== html) element.innerHTML = html;
+}
+
+function syncList(container, tagName, items, keyOf, renderItem) {
+  const entries = items.map((item, index) => ({ item, key: String(keyOf(item, index)) }));
+  const existing = new Map();
+  for (const child of Array.from(container.children)) {
+    const key = child.dataset ? child.dataset.key : undefined;
+    if (key === undefined) {
+      child.remove();
+      continue;
+    }
+    existing.set(key, child);
+  }
+  let anchor = null;
+  for (const entry of entries) {
+    let node = existing.get(entry.key);
+    const html = renderItem(entry.item);
+    if (!node) {
+      node = document.createElement(tagName);
+      node.dataset.key = entry.key;
+      node.innerHTML = html;
+    } else if (node.innerHTML !== html) {
+      node.innerHTML = html;
+    }
+    const expected = anchor ? anchor.nextSibling : container.firstChild;
+    if (expected !== node) container.insertBefore(node, expected);
+    anchor = node;
+  }
+  const keys = new Set(entries.map((entry) => entry.key));
+  for (const [key, node] of existing) {
+    if (!keys.has(key)) node.remove();
+  }
+}
+
 function shortHash(value, length = 12) {
   const text = String(value ?? "");
   return text.length > length ? `${text.slice(0, length)}…` : text || "—";
@@ -109,39 +150,43 @@ function renderState(state) {
   const demo = state.demo || {};
   const valid = audit.valid === true;
 
-  elements.systemStatus.textContent = `${String(policy.mode || "enforce").toUpperCase()} mode active`;
-  elements.metricBlocked.textContent = String(audit.blocked || 0);
-  elements.metricInspected.textContent = String(audit.records || 0);
-  elements.metricAllowed.textContent = String(audit.allowed || 0);
-  elements.metricIntegrity.textContent = valid ? "VERIFIED" : audit.records ? "INVALID" : "PENDING";
-  elements.metricHead.textContent = audit.head?.mac ? `HEAD ${shortHash(audit.head.mac, 14)}` : "No audit head";
-  elements.modeChip.textContent = String(policy.mode || "enforce").toUpperCase();
-  elements.policyDigest.textContent = `${policy.version || "—"} · ${shortHash(policy.digest || "unavailable", 12)}`;
-  elements.policyCommands.textContent = String(policy.allowed_command_profiles || 0);
-  elements.taintedSessions.textContent = String(state.sessions?.tainted || 0);
-  elements.footerVersion.textContent = `v${state.version || "0.1.0"}`;
+  setText(elements.systemStatus, `${String(policy.mode || "enforce").toUpperCase()} mode active`);
+  setText(elements.metricBlocked, audit.blocked || 0);
+  setText(elements.metricInspected, audit.records || 0);
+  setText(elements.metricAllowed, audit.allowed || 0);
+  setText(elements.metricIntegrity, valid ? "VERIFIED" : audit.records ? "INVALID" : "PENDING");
+  setText(elements.metricHead, audit.head?.mac ? `HEAD ${shortHash(audit.head.mac, 14)}` : "No audit head");
+  setText(elements.modeChip, String(policy.mode || "enforce").toUpperCase());
+  setText(elements.policyDigest, `${policy.version || "—"} · ${shortHash(policy.digest || "unavailable", 12)}`);
+  setText(elements.policyCommands, policy.allowed_command_profiles || 0);
+  setText(elements.taintedSessions, state.sessions?.tainted || 0);
+  setText(elements.footerVersion, `v${state.version || "0.1.0"}`);
 
   elements.chainStatus.classList.toggle("valid", valid && Boolean(audit.records));
   elements.chainStatus.classList.toggle("invalid", !valid && Boolean(audit.records));
-  elements.chainStatus.innerHTML = `<span></span> ${valid && audit.records ? "Chain verified" : !valid && audit.records ? "Chain invalid" : "Chain pending"}`;
+  setHtml(elements.chainStatus, `<span></span> ${valid && audit.records ? "Chain verified" : !valid && audit.records ? "Chain invalid" : "Chain pending"}`);
 
   const status = demo.status || "idle";
   const running = status === "running";
   const failed = status === "error";
   elements.runDemo.disabled = running;
   elements.resetDemo.disabled = false;
-  elements.runDemo.querySelector("span").textContent = running
-    ? "Simulation running"
-    : failed
-      ? "Retry simulation"
-      : status === "complete"
-        ? "Run simulation again"
-        : "Run live attack simulation";
-  elements.demoStatus.textContent = failed && demo.error ? `${statusLabel(status)} · ${demo.error}` : statusLabel(status);
-  elements.demoSession.textContent = demo.session_id ? `Session ${demo.session_id}` : "No active demo session";
-  elements.demoStepCount.textContent = `${demo.current_step || 0} / ${demo.total_steps || 8}`;
-  elements.demoProgress.value = Number(demo.current_step || 0);
-  elements.demoProgress.textContent = `${Math.round((Number(demo.current_step || 0) / Number(demo.total_steps || 8)) * 100)}%`;
+  setText(
+    elements.runDemo.querySelector("span"),
+    running
+      ? "Simulation running"
+      : failed
+        ? "Retry simulation"
+        : status === "complete"
+          ? "Run simulation again"
+          : "Run live attack simulation"
+  );
+  setText(elements.demoStatus, failed && demo.error ? `${statusLabel(status)} · ${demo.error}` : statusLabel(status));
+  setText(elements.demoSession, demo.session_id ? `Session ${demo.session_id}` : "No active demo session");
+  setText(elements.demoStepCount, `${demo.current_step || 0} / ${demo.total_steps || 8}`);
+  const progress = Number(demo.current_step || 0);
+  if (elements.demoProgress.value !== progress) elements.demoProgress.value = progress;
+  setText(elements.demoProgress, `${Math.round((progress / Number(demo.total_steps || 8)) * 100)}%`);
   renderDemo(demo);
 }
 
@@ -149,67 +194,80 @@ function renderDemo(demo) {
   const steps = Array.isArray(demo.steps) ? demo.steps : [];
   if (!steps.length) {
     if (demo.status === "error") {
-      elements.demoTimeline.innerHTML = `
+      setHtml(elements.demoTimeline, `
         <li class="timeline-empty">
           <div class="empty-shield">
             <svg viewBox="0 0 32 38" aria-hidden="true"><path d="M16 1 29 6v10c0 9.7-5.2 16.7-13 21C8.2 32.7 3 25.7 3 16V6L16 1Z"></path><path d="M11 12l10 8M21 12l-10 8"></path></svg>
           </div>
           <strong>Trace halted at step ${escapeHtml(demo.failed_step || 1)} of ${escapeHtml(demo.total_steps || 8)}</strong>
           <span>${escapeHtml(demo.error || "The enforcement engine returned an unexpected error.")}</span>
-        </li>`;
+        </li>`);
       return;
     }
-    elements.demoTimeline.innerHTML = `
+    setHtml(elements.demoTimeline, `
       <li class="timeline-empty">
         <div class="empty-shield">
           <svg viewBox="0 0 32 38" aria-hidden="true"><path d="M16 1 29 6v10c0 9.7-5.2 16.7-13 21C8.2 32.7 3 25.7 3 16V6L16 1Z"></path><path d="m12 16 3 3 6-7"></path></svg>
         </div>
         <strong>Run the simulation to inspect the full decision trail</strong>
         <span>Safe repository work continues while high-impact actions are denied.</span>
-      </li>`;
+      </li>`);
     return;
   }
-  elements.demoTimeline.innerHTML = steps.map((step) => {
+  syncList(elements.demoTimeline, "li", steps, (step) => step.index, (step) => {
     const outcome = safeClass(step.outcome);
     const marker = outcome === "block" ? "X" : outcome === "allow" ? "A" : "O";
     return `
-      <li class="timeline-item ${escapeHtml(outcome)}">
-        <span class="timeline-marker">${marker}</span>
-        <div class="timeline-copy">
-          <strong>${escapeHtml(step.title)}</strong>
-          <span>${escapeHtml(step.detail)}</span>
-        </div>
-        <div class="timeline-result">
-          <code>${escapeHtml(String(step.outcome || "observe").toUpperCase())}</code>
-          <small>${escapeHtml(step.rule_id || "—")}</small>
-        </div>
-      </li>`;
-  }).join("");
+      <span class="timeline-marker">${marker}</span>
+      <div class="timeline-copy">
+        <strong>${escapeHtml(step.title)}</strong>
+        <span>${escapeHtml(step.detail)}</span>
+      </div>
+      <div class="timeline-result">
+        <code>${escapeHtml(String(step.outcome || "observe").toUpperCase())}</code>
+        <small>${escapeHtml(step.rule_id || "—")}</small>
+      </div>`;
+  });
+  for (const node of elements.demoTimeline.children) {
+    const step = steps.find((entry) => String(entry.index) === node.dataset.key);
+    if (!step) continue;
+    const outcome = safeClass(step.outcome);
+    const className = `timeline-item ${outcome}`;
+    if (node.className !== className) node.className = className;
+  }
 }
 
 function renderFindings(scan) {
   const findings = Array.isArray(scan.findings) ? scan.findings : [];
   const counts = scan.counts || {};
-  elements.criticalCount.textContent = String(counts.critical || 0);
-  elements.findingCount.textContent = `${findings.length} finding${findings.length === 1 ? "" : "s"}`;
-  elements.scanMeta.textContent = `${scan.files_scanned || 0} files · ${Math.max(1, Math.round((scan.bytes_scanned || 0) / 1024))} KB scanned${scan.truncated ? " · bounded" : ""}`;
+  setText(elements.criticalCount, counts.critical || 0);
+  setText(elements.findingCount, `${findings.length} finding${findings.length === 1 ? "" : "s"}`);
+  setText(
+    elements.scanMeta,
+    `${scan.files_scanned || 0} files · ${Math.max(1, Math.round((scan.bytes_scanned || 0) / 1024))} KB scanned${scan.truncated ? " · bounded" : ""}`
+  );
   if (!findings.length) {
-    elements.findingList.innerHTML = `<div class="audit-empty">No instruction or supply-chain findings in the selected repository.</div>`;
+    setHtml(elements.findingList, `<div class="audit-empty">No instruction or supply-chain findings in the selected repository.</div>`);
     return;
   }
-  elements.findingList.innerHTML = findings.slice(0, 14).map((finding) => {
+  const visible = findings.slice(0, 14);
+  syncList(elements.findingList, "div", visible, (finding, index) => `${index}:${finding.rule_id}:${finding.source}`, (finding) => {
     const severity = safeClass(finding.severity);
     const location = finding.line ? `${finding.source}:${finding.line}` : finding.source;
     return `
-      <div class="finding ${escapeHtml(severity)}">
-        <span class="finding-severity"></span>
-        <div class="finding-copy">
-          <strong>${escapeHtml(finding.title)}</strong>
-          <span>${escapeHtml(location)} · ${escapeHtml(finding.evidence)}</span>
-        </div>
-        <code>${escapeHtml(finding.rule_id)}</code>
-      </div>`;
-  }).join("");
+      <span class="finding-severity"></span>
+      <div class="finding-copy">
+        <strong>${escapeHtml(finding.title)}</strong>
+        <span>${escapeHtml(location)} · ${escapeHtml(finding.evidence)}</span>
+      </div>
+      <code>${escapeHtml(finding.rule_id)}</code>`;
+  });
+  for (const node of elements.findingList.children) {
+    const finding = visible[Number(String(node.dataset.key).split(":")[0])];
+    if (!finding) continue;
+    const className = `finding ${safeClass(finding.severity)}`;
+    if (node.className !== className) node.className = className;
+  }
 }
 
 function renderAudit(payload) {
@@ -220,42 +278,51 @@ function renderAudit(payload) {
 
   elements.chainStatus.classList.toggle("valid", valid && events.length > 0);
   elements.chainStatus.classList.toggle("invalid", !valid && events.length > 0);
-  elements.chainStatus.innerHTML = `<span></span> ${valid && events.length ? "Chain verified" : !valid && events.length ? "Chain invalid" : "Chain pending"}`;
-  elements.auditSequence.textContent = latest ? String(latest.sequence).padStart(4, "0") : "0000";
-  elements.auditPolicy.textContent = latest?.policy_version || "—";
-  elements.auditSession.textContent = latest?.session ? shortHash(latest.session, 10) : "—";
-  elements.auditDecision.textContent = latest?.decision?.toUpperCase() || "—";
+  setHtml(elements.chainStatus, `<span></span> ${valid && events.length ? "Chain verified" : !valid && events.length ? "Chain invalid" : "Chain pending"}`);
+  setText(elements.auditSequence, latest ? String(latest.sequence).padStart(4, "0") : "0000");
+  setText(elements.auditPolicy, latest?.policy_version || "—");
+  setText(elements.auditSession, latest?.session ? shortHash(latest.session, 10) : "—");
+  setText(elements.auditDecision, latest?.decision?.toUpperCase() || "—");
 
   if (!events.length) {
-    elements.auditList.innerHTML = `<div class="audit-empty">No enforcement events yet. Run the simulation or submit a Bob action.</div>`;
+    setHtml(elements.auditList, `<div class="audit-empty">No enforcement events yet. Run the simulation or submit a Bob action.</div>`);
     return;
   }
-  elements.auditList.innerHTML = events.slice(-14).reverse().map((event) => {
-    const decision = safeClass(event.decision);
-    return `
-      <div class="audit-row ${escapeHtml(decision)}">
-        <span class="audit-sequence">#${String(event.sequence).padStart(4, "0")}</span>
-        <span class="audit-event">${escapeHtml(event.event)}</span>
-        <span class="audit-target" title="${escapeHtml(event.target)}">${escapeHtml(event.target || event.reason)}</span>
-        <span class="audit-rule">${escapeHtml(event.rule_id)}</span>
-        <span class="audit-decision-pill">${escapeHtml(String(event.decision || "").toUpperCase())}</span>
-      </div>`;
-  }).join("");
+  const visible = events.slice(-14).reverse();
+  syncList(elements.auditList, "div", visible, (event) => event.sequence, (event) => `
+      <span class="audit-sequence">#${String(event.sequence).padStart(4, "0")}</span>
+      <span class="audit-event">${escapeHtml(event.event)}</span>
+      <span class="audit-target" title="${escapeHtml(event.target)}">${escapeHtml(event.target || event.reason)}</span>
+      <span class="audit-rule">${escapeHtml(event.rule_id)}</span>
+      <span class="audit-decision-pill">${escapeHtml(String(event.decision || "").toUpperCase())}</span>`);
+  for (const node of elements.auditList.children) {
+    const event = visible.find((entry) => String(entry.sequence) === node.dataset.key);
+    if (!event) continue;
+    const className = `audit-row ${safeClass(event.decision)}`;
+    if (node.className !== className) node.className = className;
+  }
 }
 
-async function refresh() {
+let lastScanAt = 0;
+
+async function refresh(options = {}) {
   if (refreshInFlight) return;
   refreshInFlight = true;
   try {
-    const [state, scan, audit] = await Promise.all([
+    const now = Date.now();
+    const scanDue = options.forceScan === true || now - lastScanAt >= 10000;
+    const [state, audit, scan] = await Promise.all([
       api("/api/state"),
-      api("/api/findings?path=demo%2Fpoisoned_repo"),
-      api("/api/audit?limit=100")
+      api("/api/audit?limit=100"),
+      scanDue ? api("/api/findings?path=demo%2Fpoisoned_repo") : Promise.resolve(null)
     ]);
     setConnection(true);
     renderState(state);
-    renderFindings(scan);
     renderAudit(audit);
+    if (scan) {
+      lastScanAt = Date.now();
+      renderFindings(scan);
+    }
   } catch (error) {
     setConnection(false);
     showToast(`Unable to refresh enforcement state: ${error.message}`, true);
@@ -294,7 +361,7 @@ async function resetDemo() {
 elements.runDemo.addEventListener("click", runDemo);
 elements.resetDemo.addEventListener("click", resetDemo);
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) refresh();
+  if (!document.hidden) refresh({ forceScan: true });
 });
 
 window.setInterval(refresh, 1000);
