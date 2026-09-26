@@ -1,0 +1,47 @@
+{
+  "version": "2026.09.1",
+  "mode": "enforce",
+  "allowed_commands": [
+    {
+      "executable": "git",
+      "exact": ["status", "--short"]
+    },
+    {
+      "executable": "git",
+      "prefix": ["diff", "--no-ext-diff", "--no-pager", "--"]
+    },
+    {
+      "executable": "git",
+      "prefix": ["log", "--oneline", "-n"]
+    },
+    {
+      "executable": "ls",
+      "prefix": ["--"]
+    },
+    {
+      "executable": "pwd",
+      "exact": []
+    },
+    {
+      "executable": "python3",
+      "exact": ["-m", "unittest", "discover", "-s", "tests"]
+    },
+    {
+      "executable": "python3",
+      "prefix": ["-m", "contextsentry.server"]
+    },
+    {
+      "executable": "python3",
+      "prefix": ["-m", "contextsentry.mcp_server"]
+    }
+  ],
+  "allowed_mcp_servers": [
+    "contextsentry"
+  ],
+  "allowed_mcp_tools": [
+    "scan_path",
+    "scan_text",
+    "get_audit_summary",
+    "check_command"
+  ]
+}

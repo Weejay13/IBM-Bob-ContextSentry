@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.contextsentry/state/
+bob_sessions/*
+!bob_sessions/.gitkeep
+!bob_sessions/*.md
+!bob_sessions/*.png
+!bob_sessions/*.jpg
+!bob_sessions/*.jpeg
+!bob_sessions/*.webp
+.DS_Store
+.venv/
+venv/

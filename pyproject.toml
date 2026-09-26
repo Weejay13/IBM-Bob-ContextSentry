@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=65"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "contextsentry"
+version = "0.1.0"
+description = "Repository-context firewall for IBM Bob 2.0"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+contextsentry = "contextsentry.server:main"
+contextsentry-hook = "contextsentry.hook:main"
+contextsentry-mcp = "contextsentry.mcp_server:main"
+
+[tool.setuptools]
+packages = ["contextsentry"]

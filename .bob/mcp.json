@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "contextsentry": {
+      "command": "python3",
+      "args": ["-m", "contextsentry.mcp_server"],
+      "cwd": ".",
+      "disabled": false
+    }
+  }
+}
