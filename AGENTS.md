@@ -9,7 +9,6 @@ Build and validate a local-first repository-context firewall for IBM Bob 2.0. Th
 - Start the dashboard: `python3 -m contextsentry.server`
 - Run tests: `python3 -m unittest discover -s tests -v`
 - Run the fixture benchmark: `python3 scripts/benchmark.py`
-- Check submission readiness: `python3 scripts/verify_submission.py --local`
 - Compile Python: `python3 -m compileall -q contextsentry tests`
 - Check dashboard JavaScript: `node --check web/app.js`
 

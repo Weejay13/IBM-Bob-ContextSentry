@@ -13,3 +13,10 @@ bob_sessions/*
 .venv/
 venv/
 .submission-notes/
+
+# Submission paperwork stays out of the public repository.
+DEMO_SCRIPT.md
+SUBMISSION_CHECKLIST.md
+scripts/verify_submission.py
+submission/
+submission-local/
